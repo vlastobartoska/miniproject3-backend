@@ -44,14 +44,14 @@ const register = async (req, res) => {
 
 const login = async (req, res) => {
   try {
-    const { email, password } = req.body;
+    const { emailId, password } = req.body;
 
-    if (!email || !password) {
+    if (!emailId || !password) {
       return res.status(400).json({ message: "All fields are required" });
     }
 
     const user = await Models.User.findOne({
-      where: { email },
+      where: { emailId },
     });
 
     if (!user) {
@@ -65,7 +65,7 @@ const login = async (req, res) => {
     }
 
     const token = jwt.sign(
-      { id: user.id, email: user.email },
+      { id: user.id, emailId: user.emailId },
       process.env.JWT_SECRET,
       { expiresIn: "7d" }
     );

@@ -33,8 +33,13 @@ const createIdea = async (req, res) => {
 
 const getIdeas = async (req, res) => {
   try {
-    const rows = await Models.GameIdea.findAll({})
-    res.status(200).json({result: 200, rows: rows})
+    const user_id = req.user.id;
+    const rows = await Models.GameIdea.findAll({
+      where: {user_id},
+    })
+    console.log(rows);
+    
+    res.status(200).json(rows)
   } catch (err) {
     console.log(err);
     res.send({result: 500, error: err.message })
