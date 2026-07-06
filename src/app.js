@@ -6,7 +6,7 @@ const authRoutes = require('./routes/auth');
 const gameIdeasRoutes = require('./routes/gameIdeas');
 const statsRoutes = require('./routes/stats');
 const gamesRoutes = require('./routes/games');
-require('./db');
+let dbConnect = require('./db');
 
 const app = express();
 

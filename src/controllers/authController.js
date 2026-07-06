@@ -1,66 +1,84 @@
-const bcrypt = require('bcryptjs');
-const jwt = require('jsonwebtoken');
-const db = require('../db');
+const bcrypt = require("bcrypt");
+console.log("bcrypt loaded:", bcrypt);
+const jwt = require("jsonwebtoken");
+const Models = require("../model");
 
 const register = async (req, res) => {
   try {
-    const { name, email, password } = req.body;
+    const { name, emailId, password } = req.body;
 
-    if (!name || !email || !password) {
-      return res.status(400).json({ message: 'All fields are required' });
+    if (!name || !emailId || !password) {
+      return res.status(400).json({ message: "All fields are required" });
     }
 
-    const [existing] = await db.query('SELECT id FROM users WHERE email = ?', [email]);
-    if (existing.length > 0) {
-      return res.status(400).json({ message: 'Email already registered' });
+    const existing = await Models.User.findOne({
+      where: { emailId },
+    });
+
+    if (existing) {
+      return res.status(400).json({ message: "Email already registered" });
     }
 
-    const password_hash = await bcrypt.hash(password, 10);
-    const [result] = await db.query(
-      'INSERT INTO users (name, email, password_hash) VALUES (?, ?, ?)',
-      [name, email, password_hash]
-    );
+    const user = await Models.User.create({
+      name,
+      emailId,
+      password,
+    });
 
     const token = jwt.sign(
-      { id: result.insertId, email },
+      { id: user.id, emailId: user.emailId },
       process.env.JWT_SECRET,
-      { expiresIn: '7d' }
+      { expiresIn: "7d" },
     );
 
-    res.status(201).json({ message: 'User registered', token });
+    res.status(201).json({ message: "User registered", token });
   } catch (err) {
-    res.status(500).json({ message: 'Server error', error: err.message });
+    console.error(err);
+    res.status(500).json({
+      message: "Server error",
+      error: err.message,
+    });
   }
 };
 
 const login = async (req, res) => {
   try {
-    const { email, password } = req.body;
+    const { emailId, password } = req.body;
 
-    if (!email || !password) {
-      return res.status(400).json({ message: 'All fields are required' });
+    if (!emailId || !password) {
+      return res.status(400).json({ message: "All fields are required" });
     }
 
-    const [rows] = await db.query('SELECT * FROM users WHERE email = ?', [email]);
-    if (rows.length === 0) {
-      return res.status(401).json({ message: 'Invalid credentials' });
+    const user = await Models.User.findOne({
+      where: { emailId },
+    });
+
+    if (!user) {
+      return res.status(401).json({ message: "Invalid credentials:user" });
     }
 
-    const user = rows[0];
-    const isMatch = await bcrypt.compare(password, user.password_hash);
+    console.log("LOGIN password:", JSON.stringify(password));
+    console.log("stored hash:", user.password);
+
+    const isMatch = await bcrypt.compare(password, user.password);
+
+    console.log("match:", isMatch);
+
     if (!isMatch) {
-      return res.status(401).json({ message: 'Invalid credentials' });
+      return res
+        .status(401)
+        .json({ message: "Invalid credentials: not match" });
     }
 
     const token = jwt.sign(
-      { id: user.id, email: user.email },
+      { id: user.id, emailId: user.emailId },
       process.env.JWT_SECRET,
-      { expiresIn: '7d' }
+      { expiresIn: "7d" },
     );
 
-    res.json({ message: 'Login successful', token });
+    res.json({ message: "Login successful", token });
   } catch (err) {
-    res.status(500).json({ message: 'Server error', error: err.message });
+    res.status(500).json({ message: "Server error", error: err.message });
   }
 };
 
