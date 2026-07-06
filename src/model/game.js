@@ -11,6 +11,10 @@ Game.init(
       autoIncrement: true,
       primaryKey: true,
     },
+    rank: {
+      type: DataTypes.INTEGER,
+      allowNull: false
+    },
     name: {
       type: DataTypes.STRING,
       allowNull: false,
@@ -21,7 +25,7 @@ Game.init(
     },
     year: {
       type: DataTypes.INTEGER,
-      allowNull: false,
+      allowNull: true,
     },
     genre: {
       type: DataTypes.STRING,

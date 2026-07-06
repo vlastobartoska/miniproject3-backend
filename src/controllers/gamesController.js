@@ -1,29 +1,28 @@
-const db = require('../db');
+const Models = require("../model");
 
 const getAllGames = async (req, res) => {
   try {
     const { genre, platform, limit = 50 } = req.query;
 
-    let query = 'SELECT * FROM games WHERE 1=1';
-    const params = [];
+    const where = {};
 
     if (genre) {
-      query += ' AND genre = ?';
-      params.push(genre);
+      where.genre = genre;
     }
 
     if (platform) {
-      query += ' AND platform = ?';
-      params.push(platform);
+      where.platform = platform;
     }
 
-    query += ' ORDER BY global_sales DESC LIMIT ?';
-    params.push(parseInt(limit));
+    const games = await Models.Game.findAll({
+      where,
+      limit: Number(limit),
+      order: [["global_sales", "DESC"]],
+    });
 
-    const [rows] = await db.query(query, params);
-    res.json(rows);
+    res.json(games);
   } catch (err) {
-    res.status(500).json({ message: 'Server error', error: err.message });
+    res.status(500).json({ message: "Server error", error: err.message });
   }
 };
 
@@ -31,15 +30,15 @@ const getGameById = async (req, res) => {
   try {
     const { id } = req.params;
 
-    const [rows] = await db.query('SELECT * FROM games WHERE id = ?', [id]);
+    const [rows] = await db.query("SELECT * FROM games WHERE id = ?", [id]);
 
     if (rows.length === 0) {
-      return res.status(404).json({ message: 'Game not found' });
+      return res.status(404).json({ message: "Game not found" });
     }
 
     res.json(rows[0]);
   } catch (err) {
-    res.status(500).json({ message: 'Server error', error: err.message });
+    res.status(500).json({ message: "Server error", error: err.message });
   }
 };
 
