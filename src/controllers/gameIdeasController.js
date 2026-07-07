@@ -2,6 +2,7 @@
 
 const Models = require("../model");
 
+
 const createIdea = async (req, res) => {
   try {
     const { idea_name, genre, platform, target_audience, budget, description } = req.body;
