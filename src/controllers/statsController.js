@@ -3,7 +3,6 @@ const { Op, fn, col } = require("sequelize");
 
 const topGenres = async (req, res) => {
   try {
-
     const rows = await Models.Game.findAll({
       attributes: [
         "genre",
@@ -29,16 +28,34 @@ const topGenres = async (req, res) => {
 
 const topPlatforms = async (req, res) => {
   try {
-    const [rows] = await db.query(`
-      SELECT platform,
-             COUNT(*) as game_count,
-             ROUND(SUM(global_sales), 2) as total_sales
-      FROM games
-      WHERE platform IS NOT NULL
-      GROUP BY platform
-      ORDER BY total_sales DESC
-      LIMIT 10
-    `);
+    const rows = await Models.Game.findAll({
+      attributes: [
+        "platform",
+        [fn("COUNT", col("*")), "platform_count"],
+        [fn("ROUND", fn("AVG", col("global_sales")), 2), "avg_sales"],
+        [fn("ROUND", fn("SUM", col("global_sales")), 2), "total_sales"],
+      ],
+      where: {
+        platform: {
+          [Op.ne]: null,
+        },
+      },
+      group: ["platform"],
+      order: [[fn("SUM", col("global_sales")), "DESC"]],
+      limit: 10,
+      raw: true,
+    });
+
+    // const [rows] = await db.query(`
+    //   SELECT platform,
+    //          COUNT(*) as game_count,
+    //          ROUND(SUM(global_sales), 2) as total_sales
+    //   FROM games
+    //   WHERE platform IS NOT NULL
+    //   GROUP BY platform
+    //   ORDER BY total_sales DESC
+    //   LIMIT 10
+    // `);
     res.json(rows);
   } catch (err) {
     res.status(500).json({ message: "Server error", error: err.message });
@@ -47,15 +64,30 @@ const topPlatforms = async (req, res) => {
 
 const salesByYear = async (req, res) => {
   try {
-    const [rows] = await db.query(`
-      SELECT year,
-             COUNT(*) as game_count,
-             ROUND(SUM(global_sales), 2) as total_sales
-      FROM games
-      WHERE year IS NOT NULL AND year > 0
-      GROUP BY year
-      ORDER BY year ASC
-    `);
+    const rows = await Models.Game.findAll({
+      attributes: [
+        "year",
+        [fn("COUNT", col("*")), "game_count"],
+        [fn("ROUND", fn("SUM", col("global_sales")), 2), "total_sales"],
+      ],
+      where: {
+        year: {
+          [Op.ne]: null,
+        },
+      },
+      group: ["year"],
+      order: [["year", "ASC"]],
+      raw: true,
+    });
+    // const [rows] = await db.query(`
+    //   SELECT year,
+    //          COUNT(*) as game_count,
+    //          ROUND(SUM(global_sales), 2) as total_sales
+    //   FROM games
+    //   WHERE year IS NOT NULL AND year > 0
+    //   GROUP BY year
+    //   ORDER BY year ASC
+    // `);
     res.json(rows);
   } catch (err) {
     res.status(500).json({ message: "Server error", error: err.message });
