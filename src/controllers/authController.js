@@ -4,30 +4,28 @@ const Models = require("../model");
 
 const register = async (req, res) => {
   try {
-    const { name, email, password } = req.body;
+    const { name, emailId, password } = req.body;
 
-    if (!name || !email || !password) {
+    if (!name || !emailId || !password) {
       return res.status(400).json({ message: "All fields are required" });
     }
 
     const existing = await Models.User.findOne({
-      where: { email },
+      where: { emailId },
     });
 
     if (existing) {
       return res.status(400).json({ message: "Email already registered" });
     }
 
-    const hashedPassword = await bcrypt.hash(password, 10);
-
     const user = await Models.User.create({
       name,
-      email,
-      password: hashedPassword,
+      emailId,
+      password,
     });
 
     const token = jwt.sign(
-      { id: user.id, email: user.email },
+      { id: user.id, emailId: user.emailId },
       process.env.JWT_SECRET,
       { expiresIn: "7d" }
     );
